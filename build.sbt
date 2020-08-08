@@ -19,7 +19,8 @@ libraryDependencies ++= Seq(
   "org.json4s" %% "json4s-native"  % "3.6.6",
   "org.json4s" %% "json4s-jackson" % "3.6.6",
   "com.rabbitmq" % "amqp-client" % "5.9.0",
-  "com.themillhousegroup" %% "scoup" % "0.4.7"
+  "com.themillhousegroup" %% "scoup" % "0.4.7",
+  "com.google.cloud" % "google-cloud-dialogflow" % "2.1.0"
 )
 
 scalafmtOnCompile := true
