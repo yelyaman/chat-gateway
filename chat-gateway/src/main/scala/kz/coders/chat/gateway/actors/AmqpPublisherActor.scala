@@ -1,9 +1,13 @@
 package kz.coders.chat.gateway.actors
 
-import akka.actor.{Actor, Props}
-import com.rabbitmq.client.{Channel, MessageProperties}
+import akka.actor.Actor
+import akka.actor.ActorLogging
+import akka.actor.Props
+import com.rabbitmq.client.Channel
+import com.rabbitmq.client.MessageProperties
 import kz.coders.chat.gateway.actors.AmqpPublisherActor.SendResponse
 import kz.domain.library.messages.Response
+import kz.domain.library.messages.Serializers
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.write
 
@@ -13,13 +17,15 @@ object AmqpPublisherActor {
   case class SendResponse(routingKey: String, response: Response)
 }
 
-class AmqpPublisherActor(channel: Channel) extends Actor {
-
-  implicit val formats: DefaultFormats.type = DefaultFormats
+class AmqpPublisherActor(channel: Channel)
+    extends Actor
+    with ActorLogging
+    with Serializers {
 
   override def receive: Receive = {
     case resp: SendResponse =>
-      val response = resp.response
+      log.info(s"Publisher received resp => ${resp.response}")
+      val response     = resp.response
       val jsonResponse = write(response)
       channel.basicPublish(
         "X:chat.out.gateway",
