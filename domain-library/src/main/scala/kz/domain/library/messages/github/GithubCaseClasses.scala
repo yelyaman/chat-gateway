@@ -1,4 +1,6 @@
-package kz.domain.library.messages
+package kz.domain.library.messages.github
+
+import kz.domain.library.messages.{PerRequestResponse, Sender}
 
 class GithubCaseClasses()
 

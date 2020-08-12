@@ -22,16 +22,8 @@ class AmqpListenerActor(dialogflowRef: ActorRef) extends Actor with ActorLogging
     case msg: String =>
       val userMessage = parse(msg).extract[UserMessages]
       log.info(s"Listener received message $userMessage")
-
-//      For HTTP
-//      context.actorSelection("somepath").resolveOne(3.seconds).onComplete {
-//        case Success(value) => value ! msg
-//        case Failure(exception) =>
-//      }
-
       userMessage.replyTo match {
         case Some(replyTo) =>
-          log.info(s"Listener received => $replyTo")
           dialogflowRef ! ProcessMessage(
             replyTo,
             userMessage.message.getOrElse(""),

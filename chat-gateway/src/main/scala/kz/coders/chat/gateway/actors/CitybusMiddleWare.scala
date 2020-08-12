@@ -3,7 +3,7 @@ package kz.coders.chat.gateway.actors
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import kz.domain.library.messages.{GetVehInfo, GetVehInfoResponse}
+import kz.domain.library.messages.{GetVehInfo, VehInfoResponse}
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -22,7 +22,7 @@ class CitybusMiddleWare(cityBusActor: ActorRef) extends Actor with ActorLogging 
       log.info(s"CitybusMiddleWare received $obj")
       val sender = context.sender()
 
-      (cityBusActor ? obj).mapTo[GetVehInfoResponse].map { resp =>
+      (cityBusActor ? obj).mapTo[VehInfoResponse].map { resp =>
         log.info(s"Received response -> $resp")
         sender ! resp
       }

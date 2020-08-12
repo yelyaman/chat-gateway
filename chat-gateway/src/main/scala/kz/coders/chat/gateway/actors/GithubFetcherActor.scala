@@ -7,6 +7,7 @@ import akka.actor.Props
 import akka.stream.Materializer
 import kz.coders.chat.gateway.utils.RestClientImpl
 import kz.domain.library.messages._
+import kz.domain.library.messages.github.{GetFailure, GetUserDetails, GetUserDetailsResponse, GetUserRepos, GetUserReposResponse, GithubRepository, GithubUser}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.JsonMethods.parse
 

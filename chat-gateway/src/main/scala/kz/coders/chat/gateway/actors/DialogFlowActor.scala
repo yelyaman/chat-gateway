@@ -16,14 +16,15 @@ import com.google.cloud.dialogflow.v2.SessionsSettings
 import com.google.cloud.dialogflow.v2.TextInput
 import kz.coders.chat.gateway.actors.AmqpPublisherActor.SendResponse
 import kz.coders.chat.gateway.actors.DialogFlowActor.ProcessMessage
-import kz.domain.library.messages.{GetUserDetails, GetUserRepos, GetVehInfo, Response, TelegramSender}
+import kz.domain.library.messages.github.{GetUserDetails, GetUserRepos}
+import kz.domain.library.messages.{GetLocationName, GetRoutes, GetVehInfo, Response, TelegramSender}
 
 object DialogFlowActor {
 
   case class ProcessMessage(
-      routingKey: String,
-      message: String,
-      sender: TelegramSender
+    routingKey: String,
+    message: String,
+    sender: TelegramSender
   )
 
 }
@@ -31,8 +32,7 @@ object DialogFlowActor {
 class DialogFlowActor(publisher: ActorRef, requesterActor: ActorRef) extends Actor with ActorLogging {
 
   val credentials: GoogleCredentials = GoogleCredentials.fromStream(
-    new FileInputStream(
-      """C:\Users\User\IdeaProjects\citybus-bot-ebpb-264e93b44bf2.json""")
+    new FileInputStream("""C:\Users\User\IdeaProjects\citybus-bot-ebpb-264e93b44bf2.json""")
   )
 
   val projectId: String =
@@ -54,7 +54,6 @@ class DialogFlowActor(publisher: ActorRef, requesterActor: ActorRef) extends Act
       log.info(s"Received intent name is ${response.getIntent.getDisplayName}")
       response.getIntent.getDisplayName match {
         case "get-github-account-details" =>
-          log.info(s"I received response =============== $response")
           val params = getValueByParameter(response, "git-account")
           log.info(s"I must give you details of $params")
           requesterActor ! GetUserDetails(command.routingKey, params, command.sender)
@@ -62,18 +61,23 @@ class DialogFlowActor(publisher: ActorRef, requesterActor: ActorRef) extends Act
           val params = getValueByParameter(response, "git-account")
           requesterActor ! GetUserRepos(command.routingKey, params, command.sender)
 
-
         case "get-bus-details" | "get-troll-details" =>
-          log.info(s"I received response =============== ${}")
-          val vehNum = response.getQueryText.split(" ").last
+          val vehNum  = response.getQueryText.split(" ").last
           val vehType = response.getIntent.getDisplayName.split("-")(1)
           log.info(s"I must give you details of $vehType with busNum $vehNum")
           requesterActor ! GetVehInfo(command.routingKey, command.sender, vehType, vehNum)
+        case "get-location" =>
+          val coordinates = response.getQueryText.split(",")
+          val x           = coordinates.head
+          val y           = coordinates.last
+          requesterActor ! GetLocationName(command.routingKey, command.sender, x, y)
+        case "route-second-coord" =>
+          val firstAddress = getValueByParameter(response, "first-coordinates")
+          val secondAddress = getValueByParameter(response, "second-coordinates")
+          requesterActor ! GetRoutes(command.routingKey, command.sender, firstAddress, secondAddress)
         case _ =>
           log.info(s"Last case ... => ${response.getFulfillmentText}, SENDER => ${command.sender}")
-          publisher ! SendResponse(
-            command.routingKey,
-            Response(command.sender, response.getFulfillmentText))
+          publisher ! SendResponse(command.routingKey, Response(command.sender, response.getFulfillmentText))
       }
   }
 
@@ -90,7 +94,8 @@ class DialogFlowActor(publisher: ActorRef, requesterActor: ActorRef) extends Act
                   .newBuilder()
                   .setText(request)
                   .setLanguageCode("ru")
-                  .build())
+                  .build()
+              )
           )
           .setSession(session.toString)
           .build()
