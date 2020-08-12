@@ -6,8 +6,15 @@ import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.stream.Materializer
 import kz.coders.chat.gateway.utils.RestClientImpl
-import kz.domain.library.messages._
-import kz.domain.library.messages.github.{GetFailure, GetUserDetails, GetUserDetailsResponse, GetUserRepos, GetUserReposResponse, GithubRepository, GithubUser}
+import kz.domain.library.messages.github.{
+  GetFailure,
+  GetUserDetails,
+  GetUserDetailsResponse,
+  GetUserRepos,
+  GetUserReposResponse,
+  GithubRepository,
+  GithubUser
+}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.JsonMethods.parse
 
@@ -23,9 +30,10 @@ object GithubFetcherActor {
 
 }
 
-class GithubFetcherActor(val gitHubUrlPrefix: String)(implicit
-    system: ActorSystem,
-    materializer: Materializer
+class GithubFetcherActor(val gitHubUrlPrefix: String)(
+  implicit
+  system: ActorSystem,
+  materializer: Materializer
 ) extends Actor
     with ActorLogging {
 
@@ -59,7 +67,6 @@ class GithubFetcherActor(val gitHubUrlPrefix: String)(implicit
       .get(s"$gitHubUrlPrefix/$username/repos")
       .map(x => parse(x).extract[List[GithubRepository]])
 
-
   def userDetailsResult(obj: GithubUser): String =
     s"Полное имя: ${obj.name}\n" +
       s"Имя пользователя: ${obj.login}\n" +
@@ -70,10 +77,8 @@ class GithubFetcherActor(val gitHubUrlPrefix: String)(implicit
     obj match {
       case Nil => result
       case x :: xs =>
-        userReposResult(
-          result + s"Название: ${x.name}\n     Язык: ${x.language}\n     Описание: ${x.description
-            .getOrElse("Отсутствует")}\n",
-          xs)
+        userReposResult(result + s"Название: ${x.name}\n     Язык: ${x.language}\n     Описание: ${x.description
+          .getOrElse("Отсутствует")}\n", xs)
     }
 
 }

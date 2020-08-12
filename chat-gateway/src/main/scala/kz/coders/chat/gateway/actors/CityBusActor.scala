@@ -10,6 +10,25 @@ import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import kz.coders.chat.gateway.utils.RestClientImpl
 import kz.domain.library.messages._
+import kz.domain.library.messages.citybus.CitybusDomain.{
+  AddressName,
+  BusNumResponse,
+  Busses,
+  GetBusError,
+  GetBusNum,
+  GetLocationName,
+  GetRoutes,
+  GetTrollNum,
+  GetVehInfo,
+  LocationNameResponse,
+  ParseWebPage,
+  PopulateState,
+  Routes,
+  StationInfo,
+  TransportChange,
+  TrollNumResponse,
+  VehInfoResponse
+}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.JsonMethods.parse
 import org.jsoup.Jsoup
@@ -110,7 +129,7 @@ class CityBusActor(val cityBusUrlPrefix: String)(
       }
   }
 
-  def parseWebPage =
+  def parseWebPage: Future[Document] =
     Future(Jsoup.connect("https://www.citybus.kz").timeout(3000).get())
 
   def getVehNumbers(webPage: Document, vehType: String): List[String] =
@@ -165,16 +184,11 @@ class CityBusActor(val cityBusUrlPrefix: String)(
   }
 
   def getAddressByCoordinates(x: String, y: String): Future[AddressName] = {
-    log.info(s"X: ${x}, Y: $y")
+    log.info(s"X: $x, Y: $y")
     RestClientImpl
       .get(s"https://www.citybus.kz/almaty/Navigator/GetAddress/$x/$y?_=${System.currentTimeMillis()}")
       .map(x => parse(x).extract[AddressName])
   }
-
-  def getBusAmount(busIndex: Int): Future[Int] =
-    RestClientImpl
-      .get(s"https://www.citybus.kz/almaty/Monitoring/GetRouteInfo/$busIndex?_=${System.currentTimeMillis()}")
-      .map(x => parse(x).extract[Busses].V.length)
 
   def getRoutes(firstCoord: String, secondCoord: String): Future[List[Routes]] =
     RestClientImpl
@@ -183,22 +197,24 @@ class CityBusActor(val cityBusUrlPrefix: String)(
       )
       .map(x => parse(x).extract[Array[Routes]].toList.map(x => x))
 
+  def getBusAmount(busIndex: Int): Future[Int] =
+    RestClientImpl
+      .get(s"https://www.citybus.kz/almaty/Monitoring/GetRouteInfo/$busIndex?_=${System.currentTimeMillis()}")
+      .map(x => parse(x).extract[Busses].V.length)
+
   def getTransplants(firstCoord: String, secondCoord: String): Future[Unit] =
     getRoutes(firstCoord, secondCoord).map { routes =>
       val routeAmount = routes.length
       routes.foreach { route =>
-        val startPoint  = route.Sa
-        val endPoint    = route.Sb
+        val startPoint = route.Sa
+        val endPoint   = route.Sb
         val transplants = {
           collectTransplants(route.R1.toList, route.R2.toList, route.R3.toList, route.R4.toList, route.R5.toList)
         }
 
-
         log.info(s"TRANSPLANTs => $transplants")
       }
     }
-
-
 
   def collectTransplants(
     t1: List[TransportChange],
@@ -212,8 +228,8 @@ class CityBusActor(val cityBusUrlPrefix: String)(
   def transplantsResult(result: String, transplants: List[TransportChange]) = transplants match {
     case Nil => result
     case x :: xs =>
-      val startPoint = x.Sa
-      val endPoint = x.Sb
+      val startPoint   = x.Sa
+      val endPoint     = x.Sb
       val transportNum = x.Nm
       val vehttype = x.Tp match {
         case 0 => "bus"
@@ -223,11 +239,18 @@ class CityBusActor(val cityBusUrlPrefix: String)(
         case 0 => "Автобус"
         case 1 => "Троллейбус"
       }
-
+      getPlacesByIds(startPoint, endPoint, transportNum, vehttype).onComplete{
+        case Success(value) =>
+//        Я нашел всю нужную информацию, теперь нужно только объеденить их в стринг и возвратить фунцию
+//          transplantsResult(re)
+      }
   }
 
-  def getPlaceById(startPoint: Int, endPoint: Int, transportNum: String, vehttype: String) = {
+  def getPlacesByIds(startPoint: Int, endPoint: Int, transportNum: String, vehttype: String) = {
     val id = getIdByNum(state, transportNum, vehttype)
-    val asd = getBusInfo(id).map(busses => busses.Sc.foreach(stations => stations.Ss.find(station => station.Id == startPoint)))
+      getBusInfo(id).map(busses => busses.Sc.Ss.filter(station => station.Id == startPoint).toList.head).flatMap{ startLoc =>
+        getBusInfo(id).map(busses => busses.Sc.Ss.filter(station => station.Id == endPoint).toList.head).map(endLoc =>
+        List(startLoc.Nm, endLoc.Nm))
+      }
   }
 }

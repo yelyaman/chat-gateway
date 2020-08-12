@@ -1,18 +1,14 @@
 package kz.coders.chat.gateway.actors
 
-import akka.actor.Actor
-import akka.actor.ActorLogging
-import akka.actor.ActorRef
-import akka.actor.ActorSystem
-import akka.actor.Props
-import akka.stream.Materializer
+import akka.actor.{ Actor, ActorLogging, ActorRef, ActorSystem }
 import akka.pattern.ask
+import akka.stream.Materializer
 import akka.util.Timeout
 import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
 import kz.coders.chat.gateway.actors.AmqpPublisherActor.SendResponse
-import kz.domain.library.messages.github.{GetFailure, GetResponse, GetUserDetails, GetUserDetailsResponse, GetUserRepos, GetUserReposResponse}
-import kz.domain.library.messages.{CityBusResponse, GetBusError, GetLocationName, GetRoutes, GetVehInfo, LocationNameResponse, Response, RoutesResponse, VehInfoResponse}
+import kz.domain.library.messages.Response
+import kz.domain.library.messages.citybus.CitybusDomain._
+import kz.domain.library.messages.github._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._

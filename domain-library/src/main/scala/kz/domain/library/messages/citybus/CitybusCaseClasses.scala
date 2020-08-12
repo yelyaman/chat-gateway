@@ -1,6 +1,6 @@
 package kz.domain.library.messages.citybus
 
-import kz.domain.library.messages.{PerRequestResponse, Sender}
+import kz.domain.library.messages.{ PerRequestResponse, Sender }
 import org.jsoup.nodes.Document
 
 object CitybusDomain {
@@ -51,16 +51,6 @@ object CitybusDomain {
 
   case class GetBusError(error: String) extends CityBusResponse
 
-  /**
-   *
-   * @param I
-   * @param P
-   * @param N
-   * @param D
-   * @param Dab
-   * @param Dba
-   * @param S
-   */
   case class BaseInfo(
     I: Int,
     P: Int,
@@ -71,17 +61,6 @@ object CitybusDomain {
     S: Int
   )
 
-  /**
-   *
-   * @param Id
-   * @param Nm
-   * @param Tp
-   * @param Md
-   * @param Py
-   * @param Pc
-   * @param Cp
-   * @param Sc
-   */
   case class VehicleInfo(
     Id: Int,
     Nm: String,
@@ -105,7 +84,7 @@ object CitybusDomain {
   case class Busses(
     R: BaseInfo,
     V: Array[VehicleInfo],
-    Sc: Array[Station]
+    Sc: Station
   )
 
   case class TransportChange(

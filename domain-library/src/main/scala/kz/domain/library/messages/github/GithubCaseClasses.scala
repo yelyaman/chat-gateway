@@ -1,11 +1,12 @@
 package kz.domain.library.messages.github
 
+import kz.domain.library.messages.routes.Routes.Request
 import kz.domain.library.messages.{PerRequestResponse, Sender}
 
 class GithubCaseClasses()
 
 trait GetResponse
-case class GetUserDetails(routingKey: String, login: String, sender: Sender)
+case class GetUserDetails(routingKey: String, login: String, sender: Sender) extends Request
 
 case class GetUserDetailsResponse(details: String)
     extends GetResponse

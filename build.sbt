@@ -11,6 +11,14 @@ val commonDependencies = Seq(
   "org.json4s"            %% "json4s-jackson" % "3.6.6"
 )
 
+val akkaDependencies = Seq(
+  "com.typesafe.akka" %% "akka-actor" % "2.6.7",
+  "com.typesafe.akka" %% "akka-http"   % "10.1.12",
+  "com.typesafe.akka" %% "akka-stream" % "2.6.7",
+  "com.typesafe.akka" %% "akka-slf4j" % "2.6.7",
+  "ch.qos.logback" % "logback-classic" % "1.2.3"
+)
+
 lazy val domainLibrary = project
   .in(file("domain-library"))
   .settings(
@@ -25,13 +33,36 @@ lazy val chatGateway = project
     version := "0.0.1",
     name := "chat-gateway",
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor"              % "2.6.7",
-      "com.typesafe.akka" %% "akka-http"               % "10.1.12",
-      "com.typesafe.akka" %% "akka-stream"             % "2.6.7",
-      "com.typesafe.akka" %% "akka-slf4j"              % "2.6.7",
-      "ch.qos.logback"     % "logback-classic"         % "1.2.3",
       "com.rabbitmq"       % "amqp-client"             % "5.9.0",
       "com.google.cloud"   % "google-cloud-dialogflow" % "2.1.0"
-    ) ++ commonDependencies
+    ) ++ commonDependencies ++ akkaDependencies
+  )
+  .dependsOn(domainLibrary)
+
+lazy val httpAdapter = project
+  .in(file("http-adapter"))
+  .settings(
+    version := "0.0.1",
+    name := "http-adapter",
+    libraryDependencies ++= Seq(
+      "com.softwaremill.sttp" %% "core" % "1.6.4",
+      "de.heikoseeberger" %% "akka-http-json4s" % "1.31.0",
+      "kz.coders" %% "domain-library" %  "0.0.1",
+    ) ++ commonDependencies ++ akkaDependencies
+  )
+  .dependsOn(domainLibrary)
+
+lazy val telegramService = project
+  .in(file("telegram-service"))
+  .settings(
+    version := "0.0.1",
+    name := "githuber-bot",
+    libraryDependencies ++= Seq(
+      "com.bot4s" %% "telegram-core" % "4.4.0-RC2",
+      "com.softwaremill.sttp" %% "core" % "1.6.4",
+      "de.heikoseeberger" %% "akka-http-json4s" % "1.31.0",
+      "com.rabbitmq" % "amqp-client" % "5.9.0",
+      "kz.coders" %% "domain-library" %  "0.0.1"
+    ) ++ commonDependencies ++ akkaDependencies
   )
   .dependsOn(domainLibrary)

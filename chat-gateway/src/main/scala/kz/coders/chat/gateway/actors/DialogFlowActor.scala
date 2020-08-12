@@ -3,7 +3,7 @@ package kz.coders.chat.gateway.actors
 import java.io.FileInputStream
 import java.util.UUID
 
-import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
+import akka.actor.{ Actor, ActorLogging, ActorRef }
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.auth.oauth2.ServiceAccountCredentials
@@ -16,8 +16,9 @@ import com.google.cloud.dialogflow.v2.SessionsSettings
 import com.google.cloud.dialogflow.v2.TextInput
 import kz.coders.chat.gateway.actors.AmqpPublisherActor.SendResponse
 import kz.coders.chat.gateway.actors.DialogFlowActor.ProcessMessage
-import kz.domain.library.messages.github.{GetUserDetails, GetUserRepos}
-import kz.domain.library.messages.{GetLocationName, GetRoutes, GetVehInfo, Response, TelegramSender}
+import kz.domain.library.messages.citybus.CitybusDomain.{ GetLocationName, GetRoutes, GetVehInfo }
+import kz.domain.library.messages.github.{ GetUserDetails, GetUserRepos }
+import kz.domain.library.messages.{ Response, TelegramSender }
 
 object DialogFlowActor {
 
@@ -72,7 +73,7 @@ class DialogFlowActor(publisher: ActorRef, requesterActor: ActorRef) extends Act
           val y           = coordinates.last
           requesterActor ! GetLocationName(command.routingKey, command.sender, x, y)
         case "route-second-coord" =>
-          val firstAddress = getValueByParameter(response, "first-coordinates")
+          val firstAddress  = getValueByParameter(response, "first-coordinates")
           val secondAddress = getValueByParameter(response, "second-coordinates")
           requesterActor ! GetRoutes(command.routingKey, command.sender, firstAddress, secondAddress)
         case _ =>
@@ -102,7 +103,7 @@ class DialogFlowActor(publisher: ActorRef, requesterActor: ActorRef) extends Act
       )
       .getQueryResult
 
-  def getValueByParameter(response: QueryResult, param: String) =
+  def getValueByParameter(response: QueryResult, param: String): String =
     response.getParameters.getFieldsMap
       .get(param)
       .getStringValue
