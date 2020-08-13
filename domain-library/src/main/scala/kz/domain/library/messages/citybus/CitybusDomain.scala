@@ -6,8 +6,6 @@ import org.jsoup.nodes.Document
 object CitybusDomain {
   trait CityBusResponse
 
-  case class CitybusCaseClasses()
-
   case class ParseWebPage()
 
   case class PopulateState(doc: Document)
@@ -26,17 +24,6 @@ object CitybusDomain {
   )
 
   case class VehInfoResponse(busses: String) extends CityBusResponse with PerRequestResponse
-
-  case class GetLocationName(
-    routingKey: String,
-    sender: Sender,
-    x: String,
-    y: String
-  )
-
-  case class LocationNameResponse(
-    locationName: String
-  ) extends CityBusResponse
 
   case class GetRoutes(
     routingKey: String,
@@ -110,9 +97,5 @@ object CitybusDomain {
     Pt: List[Double]
   )
 
-  case class CoordByAddressName(
-    Nm: String,
-    X: Double,
-    Y: Double
-  )
+
 }

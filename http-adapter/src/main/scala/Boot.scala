@@ -20,7 +20,7 @@ object Boot extends App {
   val gitHubUrl  = config.getString("application.gitHubUrlPrefix")
 
   val gitHubActor  = system.actorOf(Props(new GithubFetcherActor(gitHubUrl)))
-  val cityBusActor = system.actorOf(Props(new CityBusActor(cityBusUrl)))
+  val cityBusActor = system.actorOf(Props(new CityBusActor(config)))
   val host         = config.getString("application.host")
   val port         = config.getInt("application.port")
 

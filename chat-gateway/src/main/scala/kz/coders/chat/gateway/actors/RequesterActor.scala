@@ -1,6 +1,6 @@
 package kz.coders.chat.gateway.actors
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, ActorSystem }
+import akka.actor.{ Actor, ActorLogging, ActorRef, ActorSystem, Props }
 import akka.pattern.ask
 import akka.stream.Materializer
 import akka.util.Timeout
@@ -8,10 +8,22 @@ import com.typesafe.config.Config
 import kz.coders.chat.gateway.actors.AmqpPublisherActor.SendResponse
 import kz.domain.library.messages.Response
 import kz.domain.library.messages.citybus.CitybusDomain._
-import kz.domain.library.messages.github._
+import kz.domain.library.messages.github.GithubDomain.{
+  GetFailure,
+  GetResponse,
+  GetUserDetails,
+  GetUserDetailsResponse,
+  GetUserRepos,
+  GetUserReposResponse
+}
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
+
+object RequesterActor {
+  def props(publisherActor: ActorRef, config: Config)(implicit system: ActorSystem, materializer: Materializer): Props =
+    Props(new RequesterActor(publisherActor, config))
+}
 
 class RequesterActor(publisherActor: ActorRef, config: Config)(
   implicit
@@ -29,7 +41,7 @@ class RequesterActor(publisherActor: ActorRef, config: Config)(
     system.actorOf(GithubFetcherActor.props(gitHubUrl))
   }
   val citybusActor: ActorRef = {
-    system.actorOf(CityBusActor.props(cityBusUrl))
+    system.actorOf(CityBusActor.props(config))
   }
 
   override def receive: Receive = {
@@ -59,14 +71,6 @@ class RequesterActor(publisherActor: ActorRef, config: Config)(
         .map {
           case obj: VehInfoResponse =>
             publisherActor ! SendResponse(request.routingKey, Response(request.sender, obj.busses))
-        }
-    case request: GetLocationName =>
-      log.info(s"Requester received GetLocationName(${request.x}, ${request.y})")
-      (citybusActor ? request)
-        .mapTo[CityBusResponse]
-        .map {
-          case obj: LocationNameResponse =>
-            publisherActor ! SendResponse(request.routingKey, Response(request.sender, obj.locationName))
         }
     case request: GetRoutes =>
       (citybusActor ? request)

@@ -30,7 +30,7 @@ import scala.util.{ Failure, Success }
 
 object CityBusActor {
 
-  def props(url: String)(implicit system: ActorSystem, materializer: Materializer): Props = Props(new CityBusActor(url))
+  def props(config: Config)(implicit system: ActorSystem, materializer: Materializer): Props = Props(new CityBusActor(config))
 
   trait CityBusResponse
 
@@ -77,11 +77,12 @@ object CityBusActor {
   )
 }
 
-class CityBusActor(val cityBusUrlPrefix: String)(implicit val system: ActorSystem, materializer: Materializer)
+class CityBusActor(config: Config)(implicit val system: ActorSystem, materializer: Materializer)
     extends Actor
     with ActorLogging
     with ScoupImplicits {
-  val config: Config  = ConfigFactory.load()
+
+  val cityBusUrlPrefix: String = config.getString("application.cityBusUrlPrefix")
   var state: Document = Document.createShell(cityBusUrlPrefix)
 
   implicit val executionContext: ExecutionContext  = context.dispatcher
@@ -103,7 +104,7 @@ class CityBusActor(val cityBusUrlPrefix: String)(implicit val system: ActorSyste
         case Success(value) =>
           log.info(s"Парсирование успешно")
           self ! PopulateState(value)
-        case Failure(exception) =>
+        case Failure(_) =>
           log.info("Парсирование не удалось... Начинаю заново")
           self ! ParseWebPage()
       }
@@ -128,7 +129,7 @@ class CityBusActor(val cityBusUrlPrefix: String)(implicit val system: ActorSyste
       }
   }
 
-  def parseWebPage = Future(Jsoup.connect("https://www.citybus.kz").timeout(3000).get())
+  def parseWebPage: Future[Document] = Future(Jsoup.connect(cityBusUrlPrefix).timeout(3000).get())
 
   def getVehNumbers(webPage: Document, vehType: String): List[String] =
     getBlocks(webPage, vehType)

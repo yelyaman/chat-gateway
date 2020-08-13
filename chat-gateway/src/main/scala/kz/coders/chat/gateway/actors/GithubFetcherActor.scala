@@ -6,15 +6,8 @@ import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.stream.Materializer
 import kz.coders.chat.gateway.utils.RestClientImpl
-import kz.domain.library.messages.github.{
-  GetFailure,
-  GetUserDetails,
-  GetUserDetailsResponse,
-  GetUserRepos,
-  GetUserReposResponse,
-  GithubRepository,
-  GithubUser
-}
+import kz.domain.library.messages.github.GithubDomain._
+
 import org.json4s.DefaultFormats
 import org.json4s.jackson.JsonMethods.parse
 
@@ -42,14 +35,14 @@ class GithubFetcherActor(val gitHubUrlPrefix: String)(
 
   override def receive: Receive = {
     case request: GetUserDetails =>
-      log.debug(s"LOGGG: GetUserDetails... started, request -> $request")
+      log.debug(s"LOG: GetUserDetails... started, request -> $request")
       val sender = context.sender
       getGithubUser(request.login).onComplete {
         case Success(value)     => sender ! GetUserDetailsResponse(userDetailsResult(value))
         case Failure(exception) => sender ! GetFailure(exception.getMessage)
       }
     case request: GetUserRepos =>
-      log.debug(s"LOGGG: GetUserRepos... started, request -> $request")
+      log.debug(s"LOG: GetUserRepos... started, request -> $request")
       val sender = context.sender
       getUserRepositories(request.login).onComplete {
         case Success(value)     => sender ! GetUserReposResponse(userReposResult("", value))

@@ -1,22 +1,25 @@
 package kz.coders.telegram.actors
 
 import kz.coders.telegram.actors.AmqpPublisherActor.SendMessage
-import akka.actor.{ Actor, ActorLogging, Props }
-import com.rabbitmq.client.{ Channel, MessageProperties }
-import kz.domain.library.messages.{ TelegramSender, UserMessages }
+import akka.actor.{Actor, ActorLogging, Props}
+import com.rabbitmq.client.{Channel, MessageProperties}
+import com.typesafe.config.Config
+import kz.domain.library.messages.{TelegramSender, UserMessages}
 import org.json4s.DefaultFormats
 import org.json4s.jackson.Serialization.write
 
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 object AmqpPublisherActor {
-  def props(channel: Channel) = Props(new AmqpPublisherActor(channel))
+  def props(channel: Channel, config: Config) = Props(new AmqpPublisherActor(channel, config))
   case class SendMessage(sender: TelegramSender, message: String)
 }
 
-class AmqpPublisherActor(channel: Channel) extends Actor with ActorLogging {
+class AmqpPublisherActor(channel: Channel, config: Config) extends Actor with ActorLogging {
 
   implicit val formats: DefaultFormats = DefaultFormats
+
+  val gatewayInExchange = config.getString("gatewayInExchange")
 
   override def receive: Receive = {
     case msg: SendMessage =>
@@ -25,7 +28,7 @@ class AmqpPublisherActor(channel: Channel) extends Actor with ActorLogging {
       val jsonMessage = write(userMessage)
       Try(
         channel.basicPublish(
-          "X:chat.in.gateway",
+          gatewayInExchange,
           "user.chat.message",
           MessageProperties.TEXT_PLAIN,
           jsonMessage.getBytes()

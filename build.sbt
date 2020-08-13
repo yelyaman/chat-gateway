@@ -1,5 +1,5 @@
 ThisBuild / organization := "com.example"
-ThisBuild / scalaVersion := "2.12.7"
+ThisBuild / scalaVersion := "2.12.12"
 ThisBuild / scalafmtOnCompile := true
 ThisBuild / resolvers ++= Seq(
   "Millhouse Bintray" at "http://dl.bintray.com/themillhousegroup/maven"

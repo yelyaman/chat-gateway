@@ -3,7 +3,7 @@ package kz.coders.chat.gateway.actors
 import java.io.FileInputStream
 import java.util.UUID
 
-import akka.actor.{ Actor, ActorLogging, ActorRef }
+import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
 import com.google.api.gax.core.FixedCredentialsProvider
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.auth.oauth2.ServiceAccountCredentials
@@ -14,13 +14,17 @@ import com.google.cloud.dialogflow.v2.SessionName
 import com.google.cloud.dialogflow.v2.SessionsClient
 import com.google.cloud.dialogflow.v2.SessionsSettings
 import com.google.cloud.dialogflow.v2.TextInput
+import com.typesafe.config.Config
 import kz.coders.chat.gateway.actors.AmqpPublisherActor.SendResponse
 import kz.coders.chat.gateway.actors.DialogFlowActor.ProcessMessage
-import kz.domain.library.messages.citybus.CitybusDomain.{ GetLocationName, GetRoutes, GetVehInfo }
-import kz.domain.library.messages.github.{ GetUserDetails, GetUserRepos }
+import kz.domain.library.messages.citybus.CitybusDomain.{ GetRoutes, GetVehInfo }
+import kz.domain.library.messages.github.GithubDomain.{ GetUserDetails, GetUserRepos }
 import kz.domain.library.messages.{ Response, TelegramSender }
 
 object DialogFlowActor {
+
+  def props(publisher: ActorRef, requesterActor: ActorRef, config: Config): Props =
+    Props(new DialogFlowActor(publisher, requesterActor, config))
 
   case class ProcessMessage(
     routingKey: String,
@@ -30,10 +34,13 @@ object DialogFlowActor {
 
 }
 
-class DialogFlowActor(publisher: ActorRef, requesterActor: ActorRef) extends Actor with ActorLogging {
+class DialogFlowActor(publisher: ActorRef, requesterActor: ActorRef, config: Config) extends Actor with ActorLogging {
+
+  val credentialsPath: String = config.getString("dialogflow.credentialsPath")
+  val languageCode: String    = config.getString("dialogflow.languageCode")
 
   val credentials: GoogleCredentials = GoogleCredentials.fromStream(
-    new FileInputStream("""C:\Users\User\IdeaProjects\citybus-bot-ebpb-264e93b44bf2.json""")
+    new FileInputStream(credentialsPath)
   )
 
   val projectId: String =
@@ -67,11 +74,6 @@ class DialogFlowActor(publisher: ActorRef, requesterActor: ActorRef) extends Act
           val vehType = response.getIntent.getDisplayName.split("-")(1)
           log.info(s"I must give you details of $vehType with busNum $vehNum")
           requesterActor ! GetVehInfo(command.routingKey, command.sender, vehType, vehNum)
-        case "get-location" =>
-          val coordinates = response.getQueryText.split(",")
-          val x           = coordinates.head
-          val y           = coordinates.last
-          requesterActor ! GetLocationName(command.routingKey, command.sender, x, y)
         case "route-second-coord" =>
           val firstAddress  = getValueByParameter(response, "first-coordinates")
           val secondAddress = getValueByParameter(response, "second-coordinates")
@@ -94,7 +96,7 @@ class DialogFlowActor(publisher: ActorRef, requesterActor: ActorRef) extends Act
                 TextInput
                   .newBuilder()
                   .setText(request)
-                  .setLanguageCode("ru")
+                  .setLanguageCode(languageCode)
                   .build()
               )
           )

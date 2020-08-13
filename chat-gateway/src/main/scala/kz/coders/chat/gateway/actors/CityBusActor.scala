@@ -9,26 +9,7 @@ import com.themillhousegroup.scoup.ScoupImplicits
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import kz.coders.chat.gateway.utils.RestClientImpl
-import kz.domain.library.messages._
-import kz.domain.library.messages.citybus.CitybusDomain.{
-  AddressName,
-  BusNumResponse,
-  Busses,
-  GetBusError,
-  GetBusNum,
-  GetLocationName,
-  GetRoutes,
-  GetTrollNum,
-  GetVehInfo,
-  LocationNameResponse,
-  ParseWebPage,
-  PopulateState,
-  Routes,
-  StationInfo,
-  TransportChange,
-  TrollNumResponse,
-  VehInfoResponse
-}
+import kz.domain.library.messages.citybus.CitybusDomain._
 import org.json4s.DefaultFormats
 import org.json4s.jackson.JsonMethods.parse
 import org.jsoup.Jsoup
@@ -43,20 +24,21 @@ import scala.util.Success
 object CityBusActor {
 
   def props(
-    url: String
+             config: Config
   )(implicit system: ActorSystem, materializer: Materializer): Props =
-    Props(new CityBusActor(url))
+    Props(new CityBusActor(config))
 
 }
 
-class CityBusActor(val cityBusUrlPrefix: String)(
+class CityBusActor(config: Config)(
   implicit
   val system: ActorSystem,
   materializer: Materializer
 ) extends Actor
     with ActorLogging
     with ScoupImplicits {
-  val config: Config  = ConfigFactory.load()
+
+  val cityBusUrlPrefix: String = config.getString("application.cityBusUrlPrefix")
   var state: Document = Document.createShell(cityBusUrlPrefix)
 
   implicit val executionContext: ExecutionContext  = context.dispatcher
@@ -78,8 +60,8 @@ class CityBusActor(val cityBusUrlPrefix: String)(
         case Success(value) =>
           log.info(s"Парсирование успешно")
           self ! PopulateState(value)
-        case Failure(exception) =>
-          log.info("Парсирование не удалось... Начинаю заново")
+        case Failure(_) =>
+          log.warning("Парсирование не удалось... Начинаю заново")
           self ! ParseWebPage()
       }
     case GetBusNum =>
@@ -89,7 +71,7 @@ class CityBusActor(val cityBusUrlPrefix: String)(
     case GetTrollNum =>
       val sender = context.sender
       sender ! TrollNumResponse(getVehNumbers(state, "troll"))
-    case GetVehInfo(routingKey, sender, vehType, busNum) =>
+    case GetVehInfo(_, _, vehType, busNum) =>
       log.info("Пришла команда GetVehInfo")
       val sender = context.sender
       val id     = getIdByNum(state, busNum, vehType)
@@ -102,17 +84,9 @@ class CityBusActor(val cityBusUrlPrefix: String)(
             case Success(busses) =>
               val response = getInfoByNum(busses, state, busNum, vehType)
               sender ! VehInfoResponse(response)
-            case Failure(exception) =>
+            case Failure(_) =>
               sender ! GetBusError("Что то пошло не так, пожалуйста повторите позже")
           }
-      }
-    case GetLocationName(routingKey, sender, x, y) =>
-      log.info(s"Пришла команда GetLocationName(${x}, $y)")
-      val sender = context.sender
-      getAddressByCoordinates(x, y).onComplete {
-        case Success(value) =>
-          sender ! LocationNameResponse(value.Nm)
-        case Failure(_) => sender ! GetBusError("Что то пошло не так, пожалуйста повторите")
       }
 
     case GetRoutes(routingKey, sender, firstAddress, secondAddress) =>
@@ -130,7 +104,7 @@ class CityBusActor(val cityBusUrlPrefix: String)(
   }
 
   def parseWebPage: Future[Document] =
-    Future(Jsoup.connect("https://www.citybus.kz").timeout(3000).get())
+    Future(Jsoup.connect(cityBusUrlPrefix).timeout(3000).get())
 
   def getVehNumbers(webPage: Document, vehType: String): List[String] =
     getBlocks(webPage, vehType)
@@ -179,7 +153,7 @@ class CityBusActor(val cityBusUrlPrefix: String)(
           .toList
           .map(elem => elem.replace("<br>", ""))
         s"${mainInfo(1)}\n   $parking\n ${mainInfo(3)}\n ${mainInfo(4)}\n ${mainInfo(5)}\n   Количество транспорта $busAmount"
-      case None => "NONE"
+      case None => "Не смог найти информацию"
     }
   }
 

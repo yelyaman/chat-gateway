@@ -13,43 +13,55 @@ import scala.util.{ Failure, Success }
 
 object Boot extends App {
   implicit val system: ActorSystem        = ActorSystem("telegram-demo")
-  implicit val materializer: Materializer = ActorMaterializer.create(system)
+  implicit val materializer: Materializer = Materializer(system)
   implicit val ex: ExecutionContext       = system.dispatcher
 
-  val connection = RabbitMqConnection.getRabbitMqConnection("guest", "guest", "127.0.0.1", 5672, "/")
-
-  val channel = connection.createChannel()
-
-  RabbitMqConnection.declareExchange(channel, "X:chat.in.gateway", "topic") match {
-    case Success(_)         => system.log.info("successfully declared exchange IN")
-    case Failure(exception) => system.log.info(s"couldn't declare exchange IN ${exception.getMessage}")
-  }
-
-  RabbitMqConnection.declareExchange(channel, "X:chat.out.gateway", "topic") match {
-    case Success(_)         => system.log.info("successfully declared exchange OUT")
-    case Failure(exception) => system.log.info(s"couldn't declare exchange OUT ${exception.getMessage}")
-  }
-
-  RabbitMqConnection.declareAndBindQueue(
-    channel,
-    "Q:chat.telegram.response",
-    "X:chat.out.gateway",
-    "user.chat.telegram.response"
-  )
-
-  val logger: LoggingAdapter = system.log
-  val config                 = ConfigFactory.load()
+  val config = ConfigFactory.load()
 
   val cityBusUrl = config.getString("application.cityBusUrlPrefix")
   val gitHubUrl  = config.getString("application.gitHubUrlPrefix")
   val tgToken    = config.getString("telegram.token")
 
-  val publisherActor = system.actorOf(AmqpPublisherActor.props(channel))
+  val username    = config.getString("rabbitmq.username")
+  val password    = config.getString("rabbitmq.password")
+  val host        = config.getString("rabbitmq.host")
+  val port        = config.getInt("rabbitmq.port")
+  val virtualHost = config.getString("rabbitmq.virtualHost")
+
+  val gatewayInExchange     = config.getString("rabbitmq.gatewayInExchange")
+  val gatewayOutExchange    = config.getString("rabbitmq.gatewayOutExchange")
+  val telegramResponseQueue = config.getString("rabbitmq.telegramResponseQueue")
+
+  val connection = RabbitMqConnection.getRabbitMqConnection(username, password, host, port, virtualHost)
+  val channel    = connection.createChannel()
+
+  RabbitMqConnection.declareExchange(channel, gatewayInExchange, "topic") match {
+    case Success(_) => system.log.info("successfully declared 'X:chat.in.gateway' exchange")
+    case Failure(exception) =>
+      system.log.error(s"couldn't declare 'X:chat.in.gateway' exchange ${exception.getMessage}")
+  }
+
+  RabbitMqConnection.declareExchange(channel, gatewayOutExchange, "topic") match {
+    case Success(_) => system.log.info("successfully declared 'X:chat.out.gateway' exchange")
+    case Failure(exception) =>
+      system.log.error(s"couldn't declare 'X:chat.out.gateway' exchange ${exception.getMessage}")
+  }
+
+  RabbitMqConnection.declareAndBindQueue(
+    channel,
+    telegramResponseQueue,
+    gatewayOutExchange,
+    "user.chat.telegram.response"
+  )
+
+  val logger: LoggingAdapter = system.log
+
+  val publisherActor = system.actorOf(AmqpPublisherActor.props(channel, config))
 
   val service: TelegramService = new TelegramService(tgToken, publisherActor, logger)
   val listenerActor            = system.actorOf(AmqpListenerActor.props(service))
 
-  channel.basicConsume("Q:chat.telegram.response", AmqpConsumer(listenerActor))
+  channel.basicConsume(telegramResponseQueue, AmqpConsumer(listenerActor))
 
   service.run()
   system.log.debug("Started Boot.scala")

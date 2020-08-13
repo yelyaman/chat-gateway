@@ -5,18 +5,21 @@ import akka.actor.ActorLogging
 import akka.actor.Props
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.MessageProperties
+import com.typesafe.config.Config
 import kz.coders.chat.gateway.actors.AmqpPublisherActor.SendResponse
 import kz.domain.library.messages.Response
 import kz.domain.library.messages.Serializers
 import org.json4s.jackson.Serialization.write
 
 object AmqpPublisherActor {
-  def props(channel: Channel): Props = Props(new AmqpPublisherActor(channel))
+  def props(channel: Channel, config: Config): Props = Props(new AmqpPublisherActor(channel, config))
 
   case class SendResponse(routingKey: String, response: Response)
 }
 
-class AmqpPublisherActor(channel: Channel) extends Actor with ActorLogging with Serializers {
+class AmqpPublisherActor(channel: Channel, config: Config) extends Actor with ActorLogging with Serializers {
+
+  val gatewayOutExchange: String = config.getString("rabbitmq.gatewayOutExchange")
 
   override def receive: Receive = {
     case resp: SendResponse =>
@@ -24,7 +27,7 @@ class AmqpPublisherActor(channel: Channel) extends Actor with ActorLogging with 
       val response     = resp.response
       val jsonResponse = write(response)
       channel.basicPublish(
-        "X:chat.out.gateway",
+        gatewayOutExchange,
         resp.routingKey,
         MessageProperties.TEXT_PLAIN,
         jsonResponse.getBytes()
