@@ -19,7 +19,7 @@ class AmqpPublisherActor(channel: Channel, config: Config) extends Actor with Ac
 
   implicit val formats: DefaultFormats = DefaultFormats
 
-  val gatewayInExchange = config.getString("gatewayInExchange")
+  val gatewayInExchange: String = config.getString("rabbitmq.gatewayInExchange")
 
   override def receive: Receive = {
     case msg: SendMessage =>

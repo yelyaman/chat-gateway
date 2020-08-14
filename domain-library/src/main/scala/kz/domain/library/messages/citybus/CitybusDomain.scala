@@ -7,14 +7,16 @@ object CitybusDomain {
   trait CityBusResponse
 
   case class ParseWebPage()
+  case class GetAllStops()
 
   case class PopulateState(doc: Document)
+  case class PopulateStops(stops: List[TransportStop])
 
   case class GetBusNum()
   case class GetTrollNum()
 
-  case class BusNumResponse(nums: List[String])   extends CityBusResponse
-  case class TrollNumResponse(nums: List[String]) extends CityBusResponse
+  case class BusNumResponse(numbers: List[String])   extends CityBusResponse
+  case class TrollNumResponse(numbers: List[String]) extends CityBusResponse
 
   case class GetVehInfo(
     routingKey: String,
@@ -38,16 +40,28 @@ object CitybusDomain {
 
   case class GetBusError(error: String) extends CityBusResponse
 
+  /**
+   * Base information of route
+   * @param I base id of route
+   * @param N number of route
+   */
+
   case class BaseInfo(
     I: Int,
-    P: Int,
     N: String,
-    D: Double,
-    Dab: Int,
-    Dba: Int,
-    S: Int
   )
 
+  /**
+   * Information about exact transport
+   * @param Id id of transport
+   * @param Nm individual registration number
+   * @param Tp type of transport. If Tp == 0, transport is bus, if Tp == 1, transport is trolleybus
+   * @param Md model
+   * @param Py year of issue
+   * @param Pc country of origin
+   * @param Cp capacity
+   * @param Sc amount of sits
+   */
   case class VehicleInfo(
     Id: Int,
     Nm: String,
@@ -68,14 +82,24 @@ object CitybusDomain {
     Ss: Array[StationInfo]
   )
 
+  case class Stations(
+    Crs: Array[Station]
+  )
+
   case class Busses(
     R: BaseInfo,
     V: Array[VehicleInfo],
-    Sc: Station
+    Sc: Stations
   )
 
+  /**
+   * Information about exact transport transfer(пересадка)
+   * @param Sa starting place
+   * @param Sb place of arrival
+   * @param Nm number of route
+   * @param Tp type of transport. If Tp == 0, transport is bus, if Tp == 1, transport is trolleybus
+   */
   case class TransportChange(
-    Id: Int,
     Sa: Int,
     Sb: Int,
     Nm: String,
@@ -92,10 +116,8 @@ object CitybusDomain {
     R5: Array[TransportChange]
   )
 
-  case class AddressName(
+  case class TransportStop(
+    Id: Int,
     Nm: String,
-    Pt: List[Double]
   )
-
-
 }
