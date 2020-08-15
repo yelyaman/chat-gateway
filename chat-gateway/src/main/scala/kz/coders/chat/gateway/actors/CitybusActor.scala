@@ -230,11 +230,13 @@ class CitybusActor(config: Config)(
       val startEmoji  = stopEmoji(count)
       val endEmoji    = stopEmoji(count + 1)
       val startStation =
-        if (result.split("\n").last == s"$startEmoji${trVarString.head}") "\n"
+        if (result.split("\n").last == s"🏃$startEmoji${trVarString.head}") "\n"
         else s"\n$startEmoji${trVarString.head}\n"
-      val endStation = s"$endEmoji${trVarString(1)}"
-      val busses     = trVarString(2)
-      val trolls     = trVarString.last
+      val endStation =
+        if (count == transfers.length || transfers.length == 1) s"$endEmoji${trVarString(1)}"
+        else s"🏃$endEmoji${trVarString(1)}"
+      val busses = trVarString(2)
+      val trolls = trVarString.last
       val info = if (busses.isEmpty) {
         s"$startStation" +
           s"      🚎Троллейбус: $trolls\n" +
