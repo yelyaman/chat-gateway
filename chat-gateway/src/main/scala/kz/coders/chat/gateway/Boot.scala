@@ -1,7 +1,6 @@
 package kz.coders.chat.gateway
 
 import akka.actor.ActorSystem
-import akka.actor.Props
 import akka.stream.Materializer
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory

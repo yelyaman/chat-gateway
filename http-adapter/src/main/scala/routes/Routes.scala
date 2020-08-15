@@ -1,24 +1,28 @@
 package routes
 
-import actors.CityBusActor.GetVehInfo
-import actors.{ CitybusMiddleWare, GithubFetcherActor }
+import actors.CitybusActor.GetVehInfo
+import actors.{CitybusMiddleWare, GithubFetcherActor}
 import actors.GithubFetcherActor.GetUserDetails
 import actors.PerRequest.PerRequestActor
-import akka.actor.{ ActorRef, ActorSystem, Props }
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.{ RequestContext, Route, RouteResult }
+import akka.http.scaladsl.server.{RequestContext, Route, RouteResult}
 import akka.util.Timeout
-import com.typesafe.config.{ Config, ConfigFactory }
+import com.typesafe.config.{Config, ConfigFactory}
 import de.heikoseeberger.akkahttpjson4s.Json4sSupport
-import kz.domain.library.messages.routes.Routes.Request
 import org.json4s.native.Serialization
-import org.json4s.{ DefaultFormats, Serialization }
+import org.json4s.{DefaultFormats, Serialization}
+import routes.Routes.Request
 
-import scala.concurrent.{ ExecutionContext, Future, Promise }
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.concurrent.duration._
 
-class Routes(gitActor: ActorRef, cityBusActor: ActorRef)(implicit val ex: ExecutionContext, system: ActorSystem)
-    extends Json4sSupport {
+object Routes {
+  trait Request
+}
+
+class Routes(cityBusActor: ActorRef)(implicit val ex: ExecutionContext, system: ActorSystem)
+  extends Json4sSupport {
 
   implicit val formats: DefaultFormats      = DefaultFormats
   implicit val serialization: Serialization = Serialization

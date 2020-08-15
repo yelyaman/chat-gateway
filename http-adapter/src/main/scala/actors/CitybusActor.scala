@@ -1,36 +1,24 @@
 package actors
 
-import actors.CityBusActor.{
-  Busses,
-  GetBusError,
-  GetBusNum,
-  GetBusNumResponse,
-  GetTrollNum,
-  GetTrollNumResponse,
-  GetVehInfo,
-  GetVehInfoResponse,
-  ParseWebPage,
-  PopulateState
-}
-import akka.actor.{ Actor, ActorLogging, ActorSystem, Props }
+import actors.CitybusActor.{Busses, GetBusError, GetBusNum, GetBusNumResponse, GetTrollNum, GetTrollNumResponse, GetVehInfo, GetVehInfoResponse, ParseWebPage, PopulateState}
+import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import akka.stream.Materializer
 import com.themillhousegroup.scoup.ScoupImplicits
-import com.typesafe.config.{ Config, ConfigFactory }
-import kz.domain.library.messages.PerRequestResponse
-import kz.domain.library.messages.routes.Routes.Request
+import com.typesafe.config.Config
 import org.json4s.DefaultFormats
 import org.json4s.jackson.JsonMethods.parse
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.select.Elements
+import routes.Routes.Request
 import utils.RestClientImpl
 
-import scala.concurrent.{ ExecutionContext, Future }
-import scala.util.{ Failure, Success }
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
-object CityBusActor {
+object CitybusActor {
 
-  def props(config: Config)(implicit system: ActorSystem, materializer: Materializer): Props = Props(new CityBusActor(config))
+  def props(config: Config)(implicit system: ActorSystem, materializer: Materializer): Props = Props(new CitybusActor(config))
 
   trait CityBusResponse
 
@@ -41,8 +29,8 @@ object CityBusActor {
   case class GetBusNum()
   case class GetTrollNum()
 
-  case class GetBusNumResponse(nums: List[String])   extends CityBusResponse
-  case class GetTrollNumResponse(nums: List[String]) extends CityBusResponse
+  case class GetBusNumResponse(numbers: List[String])   extends CityBusResponse
+  case class GetTrollNumResponse(numbers: List[String]) extends CityBusResponse
 
   case class GetVehInfo(vehType: String, busNum: String) extends Request
   case class GetVehInfoResponse(busses: Busses)          extends CityBusResponse with PerRequestResponse
@@ -50,35 +38,32 @@ object CityBusActor {
   case class GetBusError(error: String) extends CityBusResponse
 
   case class BaseInfo(
-    I: Int,
-    P: Int,
-    N: String,
-    D: Double,
-    Dab: Int,
-    Dba: Int,
-    S: Int
-  )
+                       I: Int,
+                       P: Int,
+                       N: String,
+                       D: Double,
+                       Dab: Int,
+                       Dba: Int,
+                       S: Int
+                     )
   case class VehicleInfo(
-    Id: Int,
-    Nm: String,
-    Tp: Int,
-    Md: String,
-    Py: Int,
-    Pc: String,
-    Cp: Int,
-    Sc: Int
-  )
+                          Id: Int,
+                          Nm: String,
+                          Tp: Int,
+                          Md: String,
+                          Py: Int,
+                          Pc: String,
+                          Cp: Int,
+                          Sc: Int
+                        )
   case class Busses(
-    R: BaseInfo,
-    V: Array[VehicleInfo],
-    V1: Array[VehicleInfo],
-    V2: Array[VehicleInfo],
-    V3: Array[VehicleInfo]
-  )
+                     R: BaseInfo,
+                     V: Array[VehicleInfo],
+                   )
 }
 
-class CityBusActor(config: Config)(implicit val system: ActorSystem, materializer: Materializer)
-    extends Actor
+class CitybusActor(config: Config)(implicit val system: ActorSystem, materializer: Materializer)
+  extends Actor
     with ActorLogging
     with ScoupImplicits {
 

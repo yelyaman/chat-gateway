@@ -1,6 +1,6 @@
 package kz.domain.library.messages.citybus
 
-import kz.domain.library.messages.{ PerRequestResponse, Sender }
+import kz.domain.library.messages.Sender
 import org.jsoup.nodes.Document
 
 object CitybusDomain {
@@ -25,7 +25,7 @@ object CitybusDomain {
     busNum: String
   )
 
-  case class VehInfoResponse(busses: String) extends CityBusResponse with PerRequestResponse
+  case class VehInfoResponse(busses: String) extends CityBusResponse
 
   case class GetRoutes(
     routingKey: String,

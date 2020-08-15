@@ -3,13 +3,11 @@ package kz.coders.telegram
 import akka.actor.ActorRef
 import akka.event.LoggingAdapter
 import akka.util.Timeout
-import cats.instances.future._
-import cats.syntax.functor._
 import com.bot4s.telegram.api.RequestHandler
 import com.bot4s.telegram.api.declarative.Commands
 import com.bot4s.telegram.clients.FutureSttpClient
 import com.bot4s.telegram.future.{ Polling, TelegramBot }
-import com.bot4s.telegram.models.{ Chat, ChatType, KeyboardButton, Message, ReplyKeyboardMarkup }
+import com.bot4s.telegram.models.{ Chat, ChatType, Message}
 import com.softwaremill.sttp.SttpBackend
 import com.softwaremill.sttp.okhttp.OkHttpFutureBackend
 import kz.coders.telegram.actors.AmqpPublisherActor.SendMessage
@@ -42,7 +40,7 @@ class TelegramService(token: String, publisherActor: ActorRef, log: LoggingAdapt
   onMessage { implicit msg =>
     if (msg.location.isDefined) {
       val location = msg.location.getOrElse("").toString.split("\\(")(1).init.split(",").mkString("a")
-      log.info(s"User sended location $location")
+      log.info(s"User sent location $location")
       val sender = TelegramService.getSenderDetails(msg)
       publisherActor ! SendMessage(sender, location)
       Future()

@@ -1,11 +1,9 @@
 package kz.coders.chat.gateway.amqp
 
-import java.io.IOException
 import java.util
 
 import com.rabbitmq.client.AMQP.{Exchange, Queue}
 import com.rabbitmq.client.{Channel, Connection, ConnectionFactory}
-import kz.coders.chat.gateway.Boot.{channel, system}
 
 import scala.util.{Failure, Success, Try}
 
@@ -37,7 +35,7 @@ object RabbitMqConnection {
       )
     )
 
-  def declareAndBindQueue(channel: Channel, queueName: String, exchangeName: String, routingKey: String) =
+  def declareAndBindQueue(channel: Channel, queueName: String, exchangeName: String, routingKey: String): Try[Queue.BindOk] =
     Try(
       channel.queueDeclare(
         queueName,

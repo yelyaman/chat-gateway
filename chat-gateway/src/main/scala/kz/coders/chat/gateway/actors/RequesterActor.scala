@@ -41,7 +41,7 @@ class RequesterActor(publisherActor: ActorRef, config: Config)(
     system.actorOf(GithubFetcherActor.props(gitHubUrl))
   }
   val citybusActor: ActorRef = {
-    system.actorOf(CityBusActor.props(config))
+    system.actorOf(CitybusActor.props(config))
   }
 
   override def receive: Receive = {

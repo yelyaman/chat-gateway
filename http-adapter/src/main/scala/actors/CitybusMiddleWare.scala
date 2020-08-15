@@ -1,6 +1,6 @@
 package actors
 
-import actors.CityBusActor.{ GetVehInfo, GetVehInfoResponse }
+import actors.CitybusActor.{ GetVehInfo, GetVehInfoResponse }
 import akka.pattern.ask
 import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
 import akka.util.Timeout

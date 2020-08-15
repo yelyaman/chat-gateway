@@ -21,16 +21,16 @@ import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 
-object CityBusActor {
+object CitybusActor {
 
   def props(
     config: Config
   )(implicit system: ActorSystem, materializer: Materializer): Props =
-    Props(new CityBusActor(config))
+    Props(new CitybusActor(config))
 
 }
 
-class CityBusActor(config: Config)(
+class CitybusActor(config: Config)(
   implicit
   val system: ActorSystem,
   materializer: Materializer
@@ -41,6 +41,7 @@ class CityBusActor(config: Config)(
   val cityBusUrlPrefix: String   = config.getString("application.cityBusUrlPrefix")
   var state: Document            = Document.createShell(cityBusUrlPrefix)
   var stops: List[TransportStop] = List.empty
+  val stopEmoji = List(" 🔴 ", " 🟢 ", " 🟠 ", " 🟡 ", " 🔵 ", " 🟣 ", " 🟤 ", " ⚫ ")
 
   implicit val executionContext: ExecutionContext  = context.dispatcher
   implicit val defaultFormats: DefaultFormats.type = DefaultFormats
@@ -187,7 +188,7 @@ class CityBusActor(config: Config)(
           }
           val transportVars = transportVariants(List.empty, transfers)
           val changesAmount = transportVars.length - 1 // Количество пересадок
-          val routeString   = routeMkString("", transportVars)
+          val routeString   = routeMkString(0, "", transportVars)
           val result = s"\n\nВариант маршрута - $count\n\n" +
             s"Количество пересадок - $changesAmount" +
             s"$routeString"
@@ -222,29 +223,31 @@ class CityBusActor(config: Config)(
       transportVariants(result :+ trVariants, xs)
   }
 
-  def routeMkString(result: String, transfers: List[List[List[String]]]): String = transfers match {
+  def routeMkString(count: Int, result: String, transfers: List[List[List[String]]]): String = transfers match {
     case Nil => result
     case transfer :: xs =>
       val trVarString  = transportVariantsMkString("", "", "", "", transfer)
-      val startStation = trVarString.head
-      val endStation   = trVarString(1)
+      val startEmoji = stopEmoji(count)
+      val endEmoji = stopEmoji(count + 1)
+      val startStation = if (result.split("\n").last == s"$startEmoji${trVarString.head}") "\n" else s"\n$startEmoji${trVarString.head}\n"
+      val endStation   = s"$endEmoji${trVarString(1)}"
       val busses       = trVarString(2)
       val trolls       = trVarString.last
       val info = if (busses.isEmpty) {
-        s"\n$startStation\n" +
-          s"🚎Троллейбус: $trolls\n" +
+        s"$startStation" +
+          s"      🚎Троллейбус: $trolls\n" +
           s"$endStation"
       } else if (trolls.isEmpty) {
-        s"\n$startStation\n" +
-          s"🚌Автобус: $busses\n" +
+        s"$startStation" +
+          s"      🚌Автобус: $busses\n" +
           s"$endStation"
       } else {
-        s"\n$startStation\n" +
-          s"🚌Автобус: $busses\n" +
-          s"🚎Троллейбус: $trolls\n" +
+        s"$startStation" +
+          s"      🚌Автобус: $busses\n" +
+          s"      🚎Троллейбус: $trolls\n" +
           s"$endStation"
       }
-      routeMkString(result + info, xs)
+      routeMkString(count + 1, result + info, xs)
 
   }
 
