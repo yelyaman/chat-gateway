@@ -39,9 +39,9 @@ class CitybusActor(config: Config)(
     with ScoupImplicits {
 
   val cityBusUrlPrefix: String   = config.getString("application.cityBusUrlPrefix")
+  val stopEmoji                  = List(" 🔴 ", " 🟢 ", " 🟠 ", " 🟡 ", " 🔵 ", " 🟣 ", " 🟤 ", " ⚫ ")
   var state: Document            = Document.createShell(cityBusUrlPrefix)
   var stops: List[TransportStop] = List.empty
-  val stopEmoji = List(" 🔴 ", " 🟢 ", " 🟠 ", " 🟡 ", " 🔵 ", " 🟣 ", " 🟤 ", " ⚫ ")
 
   implicit val executionContext: ExecutionContext  = context.dispatcher
   implicit val defaultFormats: DefaultFormats.type = DefaultFormats
@@ -205,18 +205,18 @@ class CitybusActor(config: Config)(
       .map(x => parse(x).extract[Array[Routes]].toList)
 
   def transportTransfers(
-                          t1: List[TransportChange],
-                          t2: List[TransportChange],
-                          t3: List[TransportChange],
-                          t4: List[TransportChange],
-                          t5: List[TransportChange]
-                        ): List[List[TransportChange]] =
+    t1: List[TransportChange],
+    t2: List[TransportChange],
+    t3: List[TransportChange],
+    t4: List[TransportChange],
+    t5: List[TransportChange]
+  ): List[List[TransportChange]] =
     List(t1, t2, t3, t4, t5).filter(change => change.nonEmpty)
 
   def transportVariants(
-                         result: List[List[List[String]]],
-                         changes: List[List[TransportChange]]
-                       ): List[List[List[String]]] = changes match {
+    result: List[List[List[String]]],
+    changes: List[List[TransportChange]]
+  ): List[List[List[String]]] = changes match {
     case Nil => result
     case change :: xs =>
       val trVariants = variants(List.empty, change)
@@ -226,13 +226,15 @@ class CitybusActor(config: Config)(
   def routeMkString(count: Int, result: String, transfers: List[List[List[String]]]): String = transfers match {
     case Nil => result
     case transfer :: xs =>
-      val trVarString  = transportVariantsMkString("", "", "", "", transfer)
-      val startEmoji = stopEmoji(count)
-      val endEmoji = stopEmoji(count + 1)
-      val startStation = if (result.split("\n").last == s"$startEmoji${trVarString.head}") "\n" else s"\n$startEmoji${trVarString.head}\n"
-      val endStation   = s"$endEmoji${trVarString(1)}"
-      val busses       = trVarString(2)
-      val trolls       = trVarString.last
+      val trVarString = transportVariantsMkString("", "", "", "", transfer)
+      val startEmoji  = stopEmoji(count)
+      val endEmoji    = stopEmoji(count + 1)
+      val startStation =
+        if (result.split("\n").last == s"$startEmoji${trVarString.head}") "\n"
+        else s"\n$startEmoji${trVarString.head}\n"
+      val endStation = s"$endEmoji${trVarString(1)}"
+      val busses     = trVarString(2)
+      val trolls     = trVarString.last
       val info = if (busses.isEmpty) {
         s"$startStation" +
           s"      🚎Троллейбус: $trolls\n" +
