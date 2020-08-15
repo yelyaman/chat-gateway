@@ -47,7 +47,6 @@ lazy val httpAdapter = project
     libraryDependencies ++= Seq(
       "com.softwaremill.sttp" %% "core" % "1.6.4",
       "de.heikoseeberger" %% "akka-http-json4s" % "1.31.0",
-      "kz.coders" %% "domain-library" %  "0.0.1",
     ) ++ commonDependencies ++ akkaDependencies
   )
   .dependsOn(domainLibrary)
@@ -61,7 +60,6 @@ lazy val telegramService = project
       "com.bot4s" %% "telegram-core" % "4.4.0-RC2",
       "com.softwaremill.sttp" %% "core" % "1.6.4",
       "de.heikoseeberger" %% "akka-http-json4s" % "1.31.0",
-      "kz.coders" %% "domain-library" %  "0.0.1"
     ) ++ commonDependencies ++ akkaDependencies
   )
   .dependsOn(domainLibrary)
