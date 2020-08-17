@@ -4,12 +4,11 @@ import akka.actor.ActorSystem
 import akka.stream.Materializer
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
-import kz.coders.chat.gateway.actors.AmqpListenerActor
-import kz.coders.chat.gateway.actors.AmqpPublisherActor
-import kz.coders.chat.gateway.actors.DialogFlowActor
-import kz.coders.chat.gateway.actors.RequesterActor
+import kz.amqp.library.RabbitMqConnection
+import kz.coders.chat.gateway.actors.amqp.{AmqpListenerActor, AmqpPublisherActor}
+import kz.coders.chat.gateway.actors.bots.RequesterActor
+import kz.coders.chat.gateway.actors.dialogflow.DialogFlowActor
 import kz.coders.chat.gateway.amqp.AmqpConsumer
-import kz.coders.chat.gateway.amqp.RabbitMqConnection
 
 import scala.util.Failure
 import scala.util.Success

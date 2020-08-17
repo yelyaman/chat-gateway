@@ -1,4 +1,4 @@
-package kz.coders.chat.gateway.amqp
+package kz.amqp.library
 
 import java.util
 

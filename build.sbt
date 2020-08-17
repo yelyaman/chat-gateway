@@ -28,6 +28,16 @@ lazy val domainLibrary = project
     libraryDependencies ++= commonDependencies
   )
 
+lazy val amqp = project
+  .in(file("amqp"))
+  .settings(
+    version := "0.0.1",
+    name:= "amqp",
+    libraryDependencies ++= Seq(
+      "com.rabbitmq" % "amqp-client" % "5.9.0"
+    )
+  )
+
 lazy val chatGateway = project
   .in(file("chat-gateway"))
   .settings(
@@ -38,6 +48,7 @@ lazy val chatGateway = project
     ) ++ commonDependencies ++ akkaDependencies
   )
   .dependsOn(domainLibrary)
+  .dependsOn(amqp)
 
 lazy val httpAdapter = project
   .in(file("http-adapter"))
@@ -50,6 +61,7 @@ lazy val httpAdapter = project
     ) ++ commonDependencies ++ akkaDependencies
   )
   .dependsOn(domainLibrary)
+  .dependsOn(amqp)
 
 lazy val telegramService = project
   .in(file("telegram-service"))
@@ -63,3 +75,6 @@ lazy val telegramService = project
     ) ++ commonDependencies ++ akkaDependencies
   )
   .dependsOn(domainLibrary)
+  .dependsOn(amqp)
+
+
