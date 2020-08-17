@@ -1,21 +1,14 @@
-package kz.coders.chat.gateway.actors
+package kz.coders.chat.gateway.actors.bots
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, ActorSystem, Props }
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.stream.Materializer
 import akka.util.Timeout
 import com.typesafe.config.Config
-import kz.coders.chat.gateway.actors.AmqpPublisherActor.SendResponse
-import kz.domain.library.messages.Response
+import kz.coders.chat.gateway.actors.amqp.AmqpPublisherActor.SendResponse
+import kz.domain.library.messages.{Response, Sender}
 import kz.domain.library.messages.citybus.CitybusDomain._
-import kz.domain.library.messages.github.GithubDomain.{
-  GetFailure,
-  GetResponse,
-  GetUserDetails,
-  GetUserDetailsResponse,
-  GetUserRepos,
-  GetUserReposResponse
-}
+import kz.domain.library.messages.github.GithubDomain._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -32,7 +25,7 @@ class RequesterActor(publisherActor: ActorRef, config: Config)(
 ) extends Actor
     with ActorLogging {
   implicit val ex: ExecutionContext = system.dispatcher
-  implicit val timeout: Timeout     = 5.seconds
+  implicit val timeout: Timeout     = 8.seconds
 
   val cityBusUrl: String = config.getString("application.cityBusUrlPrefix")
   val gitHubUrl: String  = config.getString("application.gitHubUrlPrefix")
@@ -49,37 +42,39 @@ class RequesterActor(publisherActor: ActorRef, config: Config)(
       log.info("Requester received GetUserDetails")
       (githubActor ? request)
         .mapTo[GetResponse]
-        .map {
-          case obj: GetUserDetailsResponse =>
-            publisherActor ! SendResponse(request.routingKey, Response(request.sender, obj.details))
-          case err: GetFailure =>
-            publisherActor ! SendResponse(request.routingKey, Response(request.sender, err.error))
-        }
+        .map(x => gitProcessAndSend(x, request.routingKey, request.sender))
     case request: GetUserRepos =>
       log.info("Requester received GetUserRepos")
       (githubActor ? request)
         .mapTo[GetResponse]
-        .map {
-          case obj: GetUserReposResponse =>
-            publisherActor ! SendResponse(request.routingKey, Response(request.sender, obj.repos))
-          case err: GetFailure => err.error
-        }
+        .map(x => gitProcessAndSend(x, request.routingKey, request.sender))
     case request: GetVehInfo =>
       log.info("Requester received GetVehInfo")
       (citybusActor ? request)
         .mapTo[CityBusResponse]
-        .map {
-          case obj: VehInfoResponse =>
-            publisherActor ! SendResponse(request.routingKey, Response(request.sender, obj.busses))
-        }
+        .map(x => citybusProcessAndSend(x, request.routingKey, request.sender))
     case request: GetRoutes =>
       (citybusActor ? request)
         .mapTo[CityBusResponse]
-        .map {
-          case obj: RoutesResponse =>
-            publisherActor ! SendResponse(request.routingKey, Response(request.sender, obj.routes))
-        }
+        .map(x => citybusProcessAndSend(x, request.routingKey, request.sender))
     case obj => log.warning(s"request unhandled ${obj.getClass.getName}")
   }
 
+  def gitProcessAndSend(request: Any, routingKey: String, sender: Sender): Unit =
+    request match {
+      case obj: GetUserDetailsResponse =>
+        publisherActor ! SendResponse(routingKey, Response(sender, obj.details))
+      case obj: GetUserReposResponse =>
+        publisherActor ! SendResponse(routingKey, Response(sender, obj.repos))
+      case err: GetFailure =>
+        publisherActor ! SendResponse(routingKey, Response(sender, err.error))
+    }
+
+  def citybusProcessAndSend(request: Any, routingKey: String, sender: Sender): Unit =
+    request match {
+      case obj: VehInfoResponse =>
+        publisherActor ! SendResponse(routingKey, Response(sender, obj.busses))
+      case obj: RoutesResponse =>
+        publisherActor ! SendResponse(routingKey, Response(sender, obj.routes))
+    }
 }

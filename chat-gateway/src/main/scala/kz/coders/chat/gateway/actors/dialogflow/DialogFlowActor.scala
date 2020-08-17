@@ -1,25 +1,18 @@
-package kz.coders.chat.gateway.actors
+package kz.coders.chat.gateway.actors.dialogflow
 
 import java.io.FileInputStream
 import java.util.UUID
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import com.google.api.gax.core.FixedCredentialsProvider
-import com.google.auth.oauth2.GoogleCredentials
-import com.google.auth.oauth2.ServiceAccountCredentials
-import com.google.cloud.dialogflow.v2.DetectIntentRequest
-import com.google.cloud.dialogflow.v2.QueryInput
-import com.google.cloud.dialogflow.v2.QueryResult
-import com.google.cloud.dialogflow.v2.SessionName
-import com.google.cloud.dialogflow.v2.SessionsClient
-import com.google.cloud.dialogflow.v2.SessionsSettings
-import com.google.cloud.dialogflow.v2.TextInput
+import com.google.auth.oauth2.{GoogleCredentials, ServiceAccountCredentials}
+import com.google.cloud.dialogflow.v2._
 import com.typesafe.config.Config
-import kz.coders.chat.gateway.actors.AmqpPublisherActor.SendResponse
-import kz.coders.chat.gateway.actors.DialogFlowActor.ProcessMessage
-import kz.domain.library.messages.citybus.CitybusDomain.{ GetRoutes, GetVehInfo }
-import kz.domain.library.messages.github.GithubDomain.{ GetUserDetails, GetUserRepos }
-import kz.domain.library.messages.{ Response, TelegramSender }
+import kz.coders.chat.gateway.actors.amqp.AmqpPublisherActor.SendResponse
+import kz.coders.chat.gateway.actors.dialogflow.DialogFlowActor.ProcessMessage
+import kz.domain.library.messages.citybus.CitybusDomain.{GetRoutes, GetVehInfo}
+import kz.domain.library.messages.github.GithubDomain.{GetUserDetails, GetUserRepos}
+import kz.domain.library.messages.{Response, TelegramSender}
 
 object DialogFlowActor {
 

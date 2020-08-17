@@ -20,6 +20,7 @@ class AmqpPublisherActor(channel: Channel, config: Config) extends Actor with Ac
   implicit val formats: DefaultFormats = DefaultFormats
 
   val gatewayInExchange: String = config.getString("rabbitmq.gatewayInExchange")
+  val chatRoutingKey: String = config.getString("rabbitmq.chatRoutingKey")
 
   override def receive: Receive = {
     case msg: SendMessage =>
@@ -29,7 +30,7 @@ class AmqpPublisherActor(channel: Channel, config: Config) extends Actor with Ac
       Try(
         channel.basicPublish(
           gatewayInExchange,
-          "user.chat.message",
+          chatRoutingKey,
           MessageProperties.TEXT_PLAIN,
           jsonMessage.getBytes()
         )

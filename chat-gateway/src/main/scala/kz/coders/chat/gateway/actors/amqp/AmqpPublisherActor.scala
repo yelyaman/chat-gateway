@@ -1,14 +1,10 @@
-package kz.coders.chat.gateway.actors
+package kz.coders.chat.gateway.actors.amqp
 
-import akka.actor.Actor
-import akka.actor.ActorLogging
-import akka.actor.Props
-import com.rabbitmq.client.Channel
-import com.rabbitmq.client.MessageProperties
+import akka.actor.{Actor, ActorLogging, Props}
+import com.rabbitmq.client.{Channel, MessageProperties}
 import com.typesafe.config.Config
-import kz.coders.chat.gateway.actors.AmqpPublisherActor.SendResponse
-import kz.domain.library.messages.Response
-import kz.domain.library.messages.Serializers
+import kz.coders.chat.gateway.actors.amqp.AmqpPublisherActor.SendResponse
+import kz.domain.library.messages.{Response, Serializers}
 import org.json4s.jackson.Serialization.write
 
 object AmqpPublisherActor {

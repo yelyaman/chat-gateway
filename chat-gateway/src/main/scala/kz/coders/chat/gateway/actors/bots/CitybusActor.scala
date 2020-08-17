@@ -1,9 +1,6 @@
-package kz.coders.chat.gateway.actors
+package kz.coders.chat.gateway.actors.bots
 
-import akka.actor.Actor
-import akka.actor.ActorLogging
-import akka.actor.ActorSystem
-import akka.actor.Props
+import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import akka.stream.Materializer
 import com.themillhousegroup.scoup.ScoupImplicits
 import com.typesafe.config.Config
@@ -16,10 +13,8 @@ import org.jsoup.nodes.Document
 import org.jsoup.select.Elements
 
 import scala.annotation.tailrec
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.util.Failure
-import scala.util.Success
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 object CitybusActor {
 
@@ -39,6 +34,9 @@ class CitybusActor(config: Config)(
     with ScoupImplicits {
 
   val cityBusUrlPrefix: String   = config.getString("application.cityBusUrlPrefix")
+  val getStopsUrl: String   = config.getString("application.getStopsUrl")
+  val findRoutesUrl: String   = config.getString("application.findRoutesUrl")
+  val getRouteInfoUrl: String   = config.getString("application.getRouteInfoUrl")
   val stopEmoji                  = List(" 🔴 ", " 🟢 ", " 🟠 ", " 🟡 ", " 🔵 ", " 🟣 ", " 🟤 ", " ⚫ ")
   var state: Document            = Document.createShell(cityBusUrlPrefix)
   var stops: List[TransportStop] = List.empty
@@ -114,6 +112,7 @@ class CitybusActor(config: Config)(
 
       getRoutesInfo(firstCoordinate, secondCoordinate).onComplete {
         case Success(value) => sender ! RoutesResponse(value)
+        case Failure(_) => sender ! RoutesResponse("Что то пошло не так, пожалуйста повторите позже")
       }
   }
 
@@ -123,7 +122,7 @@ class CitybusActor(config: Config)(
   def getAllStops: Future[List[TransportStop]] =
     RestClientImpl
       .get(
-        s"https://www.citybus.kz/almaty/Monitoring/GetStops/?_=${System.currentTimeMillis()}"
+        s"$getStopsUrl?_=${System.currentTimeMillis()}"
       )
       .map(x => parse(x).extract[Array[TransportStop]].toList)
 
@@ -200,7 +199,7 @@ class CitybusActor(config: Config)(
   def getRoutes(firstCoordinate: String, secondCoordinate: String): Future[List[Routes]] =
     RestClientImpl
       .get(
-        s"https://www.citybus.kz/almaty/Navigator/FindRoutes/$firstCoordinate/$secondCoordinate?_=${System.currentTimeMillis()}"
+        s"$findRoutesUrl$firstCoordinate/$secondCoordinate?_=${System.currentTimeMillis()}"
       )
       .map(x => parse(x).extract[Array[Routes]].toList)
 
@@ -313,7 +312,7 @@ class CitybusActor(config: Config)(
 
   def getBusInfo(busIndex: Int): Future[Busses] =
     RestClientImpl
-      .get(s"https://www.citybus.kz/almaty/Monitoring/GetRouteInfo/$busIndex?_=${System.currentTimeMillis()}")
+      .get(s"$getRouteInfoUrl$busIndex?_=${System.currentTimeMillis()}")
       .map(x => parse(x).extract[Busses])
 
 }

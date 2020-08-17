@@ -1,20 +1,14 @@
-package kz.coders.chat.gateway.actors
+package kz.coders.chat.gateway.actors.bots
 
-import akka.actor.Actor
-import akka.actor.ActorLogging
-import akka.actor.ActorSystem
-import akka.actor.Props
+import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import akka.stream.Materializer
 import kz.coders.chat.gateway.utils.RestClientImpl
 import kz.domain.library.messages.github.GithubDomain._
-
 import org.json4s.DefaultFormats
 import org.json4s.jackson.JsonMethods.parse
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.util.Failure
-import scala.util.Success
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 object GithubFetcherActor {
 

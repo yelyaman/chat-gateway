@@ -1,7 +1,7 @@
-package kz.coders.chat.gateway.actors
+package kz.coders.chat.gateway.actors.amqp
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
-import kz.coders.chat.gateway.actors.DialogFlowActor.ProcessMessage
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import kz.coders.chat.gateway.actors.dialogflow.DialogFlowActor.ProcessMessage
 import kz.domain.library.messages.UserMessages
 import org.json4s.DefaultFormats
 import org.json4s.jackson.JsonMethods.parse
